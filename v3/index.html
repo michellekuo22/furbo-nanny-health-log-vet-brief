@@ -2930,7 +2930,9 @@ function n2Page(d) {
 
 // ═══ Health Log + Vet Brief (Figma "Claude Vet Brief") ═══
 const HL = [['Weight', 'h_weight', 'weight'], ['Food', 'h_food', 'food'], ['Vaccine', 'h_vaccine', 'vaccine'], ['Meds', 'h_meds', 'meds'], ['Note', 'h_note', 'note']];
-const HLOG = {};                       // logged items per day
+const HLOG = {};
+const HL_KEY = String(RP_TODAY);   // the Health Log is today's log (11/18)
+
 const HLS = { weight: '', unit: 'lb', foodChip: '', food: '', vac: [], vacOther: '', vacOpen: false, vacList: [], med: '', dose: '', medChip: '', note: '', order: [], medList: [], foodList: [] };
 let HL_ID = 1, HL_EDIT = null, HL_UNDO = null;
 const HL_KEYS = ['weight', 'food', 'vaccine', 'meds', 'note'];
@@ -2943,10 +2945,10 @@ const MON = 'Nov.';
 const dnum = (d, off) => { const dt = new Date(2026, 10, +d - off); return ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'][dt.getMonth()] + ' ' + pad2(dt.getDate()) + ', ' + dt.getFullYear(); };
 let HL_OPT = 'D';   // DRAFT: where the single "edit health log" control sits (A = title row icon, B = "Logged today" row icon, C = Edit pill)
 function n2Health() {
-  const log = HLOG[rpDay] || [];
+  const log = HLOG[HL_KEY] || [];
   const penBtn = '<button class="n2-eall" data-hleditall aria-label="Edit health log"><img src="' + N2 + 'edit.svg" alt=""></button>';
   const editPill = '<button class="n2-eall pill" data-hleditall aria-label="Edit health log"><img src="' + N2 + 'edit.svg" alt=""><span>Edit</span></button>';
-  const logged = log.length ? '<div class="n2-logged"><div class="lh"><span class="lt">Logged today</span>' + (HL_OPT === 'B' ? penBtn : '') + '</div>' + log.map(it => '<div class="n2-lrow"><img src="' + N2 + 'i_' + it.k + '.svg" alt=""><span>' + it.t + '</span></div>').join('') + '</div>' : '';
+  const logged = log.length ? '<div class="n2-logged"><div class="lh"><span class="lt">Logged today</span>' + (HL_OPT === 'B' ? penBtn : '') + '</div>' + log.map(it => '<div class="n2-lrow"><img src="' + N2 + 'i_' + it.k + '.png" alt=""><span>' + it.t + '</span></div>').join('') + '</div>' : '';
   if (HL_OPT >= 'D' && log.length) {     // Figma "Log entered - List" / "Log entered - Tag"
     const kv = t => { const i = t.indexOf(':'); return i < 0 ? ['', t] : [t.slice(0, i), t.slice(i + 1).trim()]; };
     const LBL = { weight: 'Weight', food: 'Food', vaccine: 'Vaccine', meds: 'Meds', note: 'Note' };
@@ -2961,7 +2963,7 @@ function n2Health() {
       const pills = log.map(it => '<span class="chip"><b>' + LBL[it.k] + '</b> ' + tagVal(it) + '</span>').join('');
       return '<div class="n2-card n2-health hlE"><div class="n2-hh"><b>Health Log</b></div>' + iconsRow + '<div class="n2-logged n2-lE"><span class="lt">Logged today</span><div class="lch">' + pills + '</div></div></div>';
     }
-    const rows = log.map(it => '<div class="n2-lrow"><img src="' + N2 + 'i_' + it.k + '.svg" alt=""><span>' + (it.th || hlEsc(kv(it.t)[1])) + '</span></div>').join('');
+    const rows = log.map(it => '<div class="n2-lrow"><img src="' + N2 + 'i_' + it.k + '.png" alt=""><span>' + (it.th || hlEsc(kv(it.t)[1])) + '</span></div>').join('');
     return '<div class="n2-card n2-health hlL"><div class="n2-hh n2-hhL"><span class="ht"><b>Health Log</b><i class="dot"></i><small>' + log.length + ' Logged today</small></span><button class="n2-elink" data-hleditall>Edit</button></div><div class="n2-lD">' + rows + '</div></div>';
   }
   const head = '<div class="n2-hh"><b>Health Log</b>' + (log.length && HL_OPT === 'A' ? penBtn : log.length && HL_OPT === 'C' ? editPill : '') + '</div>';
@@ -2985,10 +2987,10 @@ function hlIn(f, ph, ta) {
 }
 
 function renderHL() {
-  const ed = HL_EDIT ? (HLOG[rpDay] || []).find(x => x.id === HL_EDIT) : null;
-  const ic = (k, n) => '<div class="hl-ch"><img src="' + N2 + 'i_' + k + '.svg" alt="" style="width:' + (k === 'note' ? 20 : 24) + 'px;height:' + (k === 'note' ? 20 : 24) + 'px"><b>' + n + '</b>' + (ed && ed.k === k && ['food', 'meds', 'note'].includes(k) ? '<button class="hl-delete" data-hldelete>Delete</button>' : '') + '</div>';
+  const ed = HL_EDIT ? (HLOG[HL_KEY] || []).find(x => x.id === HL_EDIT) : null;
+  const ic = (k, n) => '<div class="hl-ch"><img src="' + N2 + 'i_' + k + '.png" alt="" style="width:' + (k === 'note' ? 20 : 24) + 'px;height:' + (k === 'note' ? 20 : 24) + 'px"><b>' + n + '</b>' + (ed && ed.k === k && ['food', 'meds', 'note'].includes(k) ? '<button class="hl-delete" data-hldelete>Delete</button>' : '') + '</div>';
   const lv = it => it.th ? it.th : hlEsc(it.t.indexOf(':') < 0 ? it.t : it.t.slice(it.t.indexOf(':') + 1).trim());
-  const lg = k => { const r = !HL_EDIT ? (HLOG[rpDay] || []).filter(it => it.k === k) : []; return r.length ? '<div class="hl-mlist hl-lg">' + r.map(it => '<div class="hl-mrow"><span>' + lv(it) + '</span><button class="hl-mdel" data-hlrm="' + it.id + '" aria-label="Delete entry"><img src="' + N2 + 'trash.svg" alt=""></button></div>').join('') + '</div>' : ''; };   // already-logged entries sit inside their own card
+  const lg = k => { const r = !HL_EDIT ? (HLOG[HL_KEY] || []).filter(it => it.k === k) : []; return r.length ? '<div class="hl-mlist hl-lg">' + r.map(it => '<div class="hl-mrow"><span>' + lv(it) + '</span><button class="hl-mdel" data-hlrm="' + it.id + '" aria-label="Delete entry"><img src="' + N2 + 'trash.svg" alt=""></button></div>').join('') + '</div>' : ''; };   // already-logged entries sit inside their own card
   document.getElementById('hl-body').innerHTML =
     '<div class="hl-card" data-sec="weight">' + ic('weight', 'Weight') + lg('weight') + '<div class="hl-wrow"><input class="hl-wtin" inputmode="none" autocomplete="off" aria-label="Weight" value="' + HLS.weight + '"><button class="hl-wt' + (HLS.weight ? ' has' : '') + '" data-wt><span>' + (HLS.weight || '0.00') + '</span></button>' +
     '<div class="hl-unit"><i class="' + (HLS.unit === 'kg' ? 'k' : '') + '"></i><button data-unit="lb" class="' + (HLS.unit === 'lb' ? 'on' : '') + '">lb</button><button data-unit="kg" class="' + (HLS.unit === 'kg' ? 'on' : '') + '">kg</button></div></div><p class="hl-last">Last logged 4.1 kg</p></div>' +
@@ -3089,7 +3091,7 @@ function hkKey(t) {
 function openHL(sec) {
   if (sec && HL_EDIT) hlResetDraft();
   renderHL();
-  document.getElementById('hl-date').textContent = 'Nov ' + pad2(rpDay) + ', 2026';
+  document.getElementById('hl-date').textContent = 'Nov ' + pad2(RP_TODAY) + ', 2026';
   const sh = document.getElementById('hl-sheet'), body = document.getElementById('hl-body');
   sh.classList.add('show'); sh.classList.remove('kbd2', 'qw');
   body.style.paddingBottom = '';
@@ -3113,7 +3115,7 @@ function hlEntries(k) {
 }
 function saveHL() {
   if (!hlHas()) return;
-  const list = HLOG[rpDay] || (HLOG[rpDay] = []);
+  const list = HLOG[HL_KEY] || (HLOG[HL_KEY] = []);
   if (HL_EDIT) {
     const i = list.findIndex(x => x.id === HL_EDIT), ents = HL_KEYS.filter(hlFilled).flatMap(hlEntries).map(e => Object.assign({ id: HL_ID++ }, e));
     if (i >= 0) list.splice(i, 1, ...ents);
@@ -3125,7 +3127,7 @@ function saveHL() {
   closeHL(true);
 }
 function openHLEdit(id) {
-  const e = (HLOG[rpDay] || []).find(x => x.id === +id); if (!e) return;
+  const e = (HLOG[HL_KEY] || []).find(x => x.id === +id); if (!e) return;
   hlResetDraft(); Object.assign(HLS, e.d); HLS.order = [e.k]; HL_EDIT = e.id; HLS.vacOpen = !!HLS.vacOther;
   openHL('');
 }
@@ -3135,14 +3137,14 @@ function hlToast(msg, noUndo) {
   t.querySelector('span').textContent = msg; t.querySelector('[data-undo]').style.display = noUndo ? 'none' : ''; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => { t.classList.remove('on'); HL_UNDO = null; }, 4500);
 }
 function hlDelete(id) {
-  const list = HLOG[rpDay] || [], i = list.findIndex(x => x.id === +id); if (i < 0) return;
-  const e = list[i]; list.splice(i, 1); HL_UNDO = { day: rpDay, i, e };
+  const list = HLOG[HL_KEY] || [], i = list.findIndex(x => x.id === +id); if (i < 0) return;
+  const e = list[i]; list.splice(i, 1); HL_UNDO = { day: HL_KEY, i, e };
   const card = document.querySelector('.n2-health'); if (card) card.outerHTML = n2Health();
   hlToast({ weight: 'Weight', food: 'Food log', vaccine: 'Vaccine', meds: 'Medication log', note: 'Note' }[e.k] + ' deleted');
 }
 function hlUndo() {
   if (!HL_UNDO) return; const { day, i, e } = HL_UNDO; (HLOG[day] || (HLOG[day] = [])).splice(i, 0, e); HL_UNDO = null;
-  const card = document.querySelector('.n2-health'); if (card && day === rpDay) card.outerHTML = n2Health();
+  const card = document.querySelector('.n2-health'); if (card) card.outerHTML = n2Health();
   const t = document.getElementById('n2-toast'); if (t) t.classList.remove('on');
   const sh = document.getElementById('hl-sheet'); if (sh && sh.classList.contains('show') && !HL_EDIT) renderHL();
 }
@@ -3201,11 +3203,11 @@ function vbTrendCards(D) {   // Figma "7 day-Health Report1": one white card, fi
 function openVB() {
   const cust = VET_OPT === 'Custom dates' && !!VET_RNG.s, D = vbData();
   const per = cust ? rngLabel(VET_RNG) : VET_OPT, hd = '<div class="vb-hd"><b>' + vbDate(D.s) + '- ' + vbDate(D.e) + '</b><span>Maltipoo<i></i>2y 3m<i></i>4 kg</span></div>';
-  const notesHtml = '<div class="vb-lab">Pet notes</div><div class="vb-card">' + (D.notes.length ? D.notes.map(([d, k, t]) => '<div class="vb-r"><em>' + d + '</em><img src="' + N2 + 'i_' + k + '.svg" alt=""><span>' + t.replace(/</g, '&lt;') + '</span></div>').join('') : '<div class="vb-r"><span>No logs in this period.</span></div>') + '</div>';
+  const notesHtml = '<div class="vb-lab">Pet notes</div><div class="vb-card">' + (D.notes.length ? D.notes.map(([d, k, t]) => '<div class="vb-r"><em>' + d + '</em><img src="' + N2 + 'i_' + k + '.png" alt=""><span>' + t.replace(/</g, '&lt;') + '</span></div>').join('') : '<div class="vb-r"><span>No logs in this period.</span></div>') + '</div>';
   if (VB_LAYOUT === 'cards') document.getElementById('vb-body').innerHTML = hd + '<div class="vb-lab">Behavior Trends (' + per + ')</div>' + vbTrendCards(D) + notesHtml;
   else document.getElementById('vb-body').innerHTML =
     hd +
-    '<div class="vb-lab">Pet notes</div><div class="vb-card">' + (D.notes.length ? D.notes.map(([d, k, t]) => '<div class="vb-r"><em>' + d + '</em><img src="' + N2 + 'i_' + k + '.svg" alt=""><span>' + t.replace(/</g, '&lt;') + '</span></div>').join('') : '<div class="vb-r"><span>No logs in this period.</span></div>') + '</div>' +
+    '<div class="vb-lab">Pet notes</div><div class="vb-card">' + (D.notes.length ? D.notes.map(([d, k, t]) => '<div class="vb-r"><em>' + d + '</em><img src="' + N2 + 'i_' + k + '.png" alt=""><span>' + t.replace(/</g, '&lt;') + '</span></div>').join('') : '<div class="vb-r"><span>No logs in this period.</span></div>') + '</div>' +
     '<div class="vb-lab">Behavior Trends (' + (cust ? rngLabel(VET_RNG) : VET_OPT) + ')</div><div class="vb-card vb-t">' + D.trends.map(([t, ar, r, d]) => '<div class="vb-tr"><div class="l"><b>' + t + '</b><span>' + (ar ? '<img src="' + N2 + 'tr_' + ar + '.svg" alt="">' : '') + r + '</span></div><p>' + d + '</p></div>').join('') + '</div>';
   const sh = document.getElementById('vb-sheet'); sh.classList.add('show'); document.getElementById('vb-body').scrollTop = 0;
   requestAnimationFrame(() => requestAnimationFrame(() => sh.classList.add('on')));
